@@ -4,6 +4,8 @@ Diffy is an IntelliJ IDEA plugin that shows Git diff stats as inline `+N -M` cou
 
 It is focused on answering a simple question quickly: how many lines were added and removed in the current change, folder, group, or file without opening a diff every time.
 
+[![Install Diffy](https://img.shields.io/badge/JetBrains-Marketplace-000?logo=jetbrains)](https://plugins.jetbrains.com/plugin/30695-diffy)
+
 ![img.png](img.png)
 
 ## What Diffy shows

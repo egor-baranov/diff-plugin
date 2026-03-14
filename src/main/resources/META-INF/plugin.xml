@@ -1,0 +1,40 @@
+<!-- Plugin Configuration File: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN, cannot be changed between the plugin versions. -->
+    <id>com.kepler88d.diff-plugin</id>
+
+    <!-- Public plugin name should be written in Title Case.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>Diffy</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor url="https://github.com/kepler88d">kepler88d</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description><![CDATA[
+        Shows Git diff stats as colored <code>+N -M</code> badges in the Commit toolwindow tree and in the status bar.
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
+    <resource-bundle>messages.MyMessageBundle</resource-bundle>
+    <!-- Extensions defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable
+                parentId="tools"
+                id="com.kepler88d.diffplugin.settings"
+                displayName="Diffy"
+                instance="com.kepler88d.diffplugin.settings.DiffStatsSettingsConfigurable"/>
+        <vcs.commitChangesViewInitializer implementation="com.kepler88d.diffplugin.commit.CommitDiffStatsInitializer"/>
+        <projectViewNodeDecorator implementation="com.kepler88d.diffplugin.projectview.ProjectDiffStatsDecorator"/>
+        <statusBarWidgetFactory
+                id="CommitDiffStatsWidget"
+                implementation="com.kepler88d.diffplugin.statusbar.CommitDiffStatsStatusBarWidgetFactory"
+                order="after Position, before LineSeparator"/>
+    </extensions>
+</idea-plugin>

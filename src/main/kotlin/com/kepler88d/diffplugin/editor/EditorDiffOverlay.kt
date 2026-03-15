@@ -1,5 +1,6 @@
 package com.kepler88d.diffplugin.editor
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -9,10 +10,21 @@ internal data class EditorDiffOverlay(
     val file: VirtualFile,
     val editor: Editor,
     val inlays: List<Inlay<*>>,
-    val highlighters: List<RangeHighlighter>
+    val highlighters: List<RangeHighlighter>,
+    val cleanupActions: List<() -> Unit> = emptyList()
 ) {
     fun dispose() {
-        inlays.filter { it.isValid }.forEach { it.dispose() }
-        highlighters.forEach { editor.markupModel.removeHighlighter(it) }
+        highlighters.forEach { highlighter ->
+            runCatching { editor.markupModel.removeHighlighter(highlighter) }
+                .onFailure { if (it is ProcessCanceledException) throw it }
+        }
+        inlays.filter { it.isValid }.forEach { inlay ->
+            runCatching { inlay.dispose() }
+                .onFailure { if (it is ProcessCanceledException) throw it }
+        }
+        cleanupActions.forEach { cleanup ->
+            runCatching { cleanup() }
+                .onFailure { if (it is ProcessCanceledException) throw it }
+        }
     }
 }

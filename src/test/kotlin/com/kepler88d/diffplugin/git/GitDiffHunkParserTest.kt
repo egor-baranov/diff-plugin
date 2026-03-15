@@ -22,6 +22,7 @@ class GitDiffHunkParserTest {
         )
 
         assertEquals(listOf(GitDiffHunk(9, 3, 2)), hunks)
+        assertEquals(listOf("old", "old2"), hunks.single().removedLines)
     }
 
     @Test

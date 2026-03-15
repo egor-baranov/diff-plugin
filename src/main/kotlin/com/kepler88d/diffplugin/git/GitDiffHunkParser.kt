@@ -3,10 +3,21 @@ package com.kepler88d.diffplugin.git
 internal object GitDiffHunkParser {
     private val hunkHeaderPattern = Regex("^@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@.*$")
 
-    fun parse(diffText: String) = diffText.lineSequence()
-        .mapNotNull { parseHeader(it) }
-        .filter { it.addedLineCount > 0 || it.removedLineCount > 0 }
-        .toList()
+    fun parse(diffText: String): List<GitDiffHunk> {
+        val hunks = mutableListOf<GitDiffHunk>()
+        var currentHunk: GitDiffHunk? = null
+        diffText.lineSequence().forEach { line ->
+            val parsedHeader = parseHeader(line)
+            if (parsedHeader != null) {
+                currentHunk = parsedHeader.takeIf { it.addedLineCount > 0 || it.removedLineCount > 0 }
+                currentHunk?.let { hunks += it }
+                return@forEach
+            }
+            if (currentHunk == null || !line.startsWith("-") || line.startsWith("---")) return@forEach
+            currentHunk = currentHunk.also { it.removedLines += line.removePrefix("-") }
+        }
+        return hunks
+    }
 
     private fun parseHeader(line: String): GitDiffHunk? {
         val match = hunkHeaderPattern.matchEntire(line) ?: return null

@@ -27,13 +27,8 @@ Diffy renders colored diff stats in these places:
 
 Added counts use the configured green color. Removed counts use the configured red color.
 
-## How it works
-
-Diffy is Git-only in the current version.
-
-For tracked changes it reads stats from Git using `git diff --numstat -z --find-renames HEAD`. For unversioned files it falls back to counting the current file lines as additions. Directory and group totals are aggregated from file-level stats.
-
-This keeps the plugin fast and simple, but it also means the counters are whole-file totals rather than exact partial-hunk totals.
+new text
+just dropped
 
 ## Supported IDE versions
 

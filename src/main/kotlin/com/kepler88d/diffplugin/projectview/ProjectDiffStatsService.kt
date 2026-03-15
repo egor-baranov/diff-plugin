@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -20,17 +21,20 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service(Service.Level.PROJECT)
 internal class ProjectDiffStatsService(
     private val project: Project
 ) : Disposable {
     private val settingsService = service<DiffStatsSettingsService>()
+    private val dumbService = DumbService.getInstance(project)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val refreshRequests = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+    private val refreshQueuedForSmartMode = AtomicBoolean(false)
     private val changeListListener = object : ChangeListListener {
         override fun allChangeListsMappingsChanged() = requestRefresh()
 
@@ -71,6 +75,7 @@ internal class ProjectDiffStatsService(
     }
 
     private suspend fun loadStats(): Map<String, DiffStats> {
+        if (dumbService.isDumb || !isProjectViewEnabled()) return emptyMap()
         val changeListManager = ChangeListManager.getInstance(project)
         val requests = changeListManager.allChanges
             .mapNotNull { DiffStatsRequestFactory.fromChange(it) } +
@@ -79,6 +84,18 @@ internal class ProjectDiffStatsService(
     }
 
     private fun requestRefresh() {
+        if (dumbService.isDumb) {
+            if (!refreshQueuedForSmartMode.compareAndSet(false, true)) return
+            dumbService.runWhenSmart {
+                refreshQueuedForSmartMode.set(false)
+                requestRefresh()
+            }
+            return
+        }
         refreshRequests.tryEmit(Unit)
+    }
+
+    private fun isProjectViewEnabled() = with(settingsService.currentState) {
+        showProjectFiles || showProjectDirectories || showProjectGroups
     }
 }

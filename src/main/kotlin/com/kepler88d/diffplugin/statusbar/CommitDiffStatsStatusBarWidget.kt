@@ -32,7 +32,7 @@ import javax.swing.JComponent
 
 internal class CommitDiffStatsStatusBarWidget(
     private val project: Project,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val stateService: DiffStatsStateService = project.service()
 ) : CustomStatusBarWidget {
     companion object {
@@ -70,9 +70,7 @@ internal class CommitDiffStatsStatusBarWidget(
             val editor = currentSelectedTextEditor() ?: return false
             val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return false
             if (!component.isVisible) return false
-            scope.launch {
-                project.service<EditorDiffHintsService>().toggle(editor, file)
-            }
+            project.service<EditorDiffHintsService>().toggle(editor, file)
             return true
         }
     }
